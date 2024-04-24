@@ -25,6 +25,7 @@ from torch.nn.utils import (
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
+from scipy import interpolate
 
 
 @gin.configurable
@@ -397,7 +398,7 @@ class AdvTrainer:
                 d = (d / torch.norm(d)) * torch.norm(_filter)
                 direction = torch.cat((direction, d.flatten()))
 
-        for alpha in tqdm(torch.arange(-1, 1 + 0.01, 0.05)):
+        for alpha in tqdm(torch.linspace(-1, 1, 5)):
 
             loss = 0
             for _, (img, label) in enumerate((train_loader)):
@@ -426,10 +427,20 @@ class AdvTrainer:
         cmap = LinearSegmentedColormap.from_list('blue', ['#add8e6', '#00008b'])
 
         plt.clf()
-        plt.ylim(0, 5)
-        plt.ylim(-1, 1)
-        plt.xticks(np.arange(-1, 1 + 0.01, 0.5))
-        plt.yticks(np.arange(0, 5 + 0.01, 1))
+        plt.axis([-1, 1, 0, 5])
+        plt.xticks(np.linspace(-1, 1, 5))
+        plt.yticks(np.linspace(0, 5, 6))
+
+        plt.rcParams['axes.autolimit_mode'] = 'round_numbers'
+        plt.rcParams['axes.xmargin'] = 0
+        plt.rcParams['axes.ymargin'] = 0
+
+
         for index, curve in enumerate(curves):
-            plt.plot(np.arange(-1, 1 + 0.01, 0.05), curve, color = cmap(index / len(curves)))    
+
+            x = np.linspace(-1, 1, 500)
+            bspline = interpolate.make_interp_spline(np.linspace(-1, 1, 5), curve)
+            y = bspline(x)
+
+            plt.plot(x, y, color = cmap(index / len(curves)))    
         
