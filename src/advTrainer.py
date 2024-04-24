@@ -398,7 +398,7 @@ class AdvTrainer:
                 d = (d / torch.norm(d)) * torch.norm(_filter)
                 direction = torch.cat((direction, d.flatten()))
 
-        for alpha in tqdm(torch.linspace(-1, 1, 5)):
+        for alpha in tqdm(torch.linspace(-1, 1, 41)):
 
             loss = 0
             for _, (img, label) in enumerate((train_loader)):
@@ -437,10 +437,5 @@ class AdvTrainer:
 
 
         for index, curve in enumerate(curves):
-
-            x = np.linspace(-1, 1, 500)
-            bspline = interpolate.make_interp_spline(np.linspace(-1, 1, 5), curve)
-            y = bspline(x)
-
-            plt.plot(x, y, color = cmap(index / len(curves)))    
+            plt.plot(np.linspace(-1, 1, 41), curve, color = cmap(index / len(curves)))    
         
