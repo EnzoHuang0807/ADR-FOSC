@@ -131,8 +131,7 @@ class AdvTrainer:
                 if e in [ i for i in range(20 - 1, 200, 20)]:
                     logging.info("Epoch: %s, Plotting Weight Loss Landscape" % (e))
                     curves.append(self.loss_landscape(model, train_loader))
-                    self.plot_curve(curves)
-                    plt.savefig(os.path.join(ckpt_path, "loss_landscape.png"))
+                    self.plot_curve(curves, ckpt_path)
 
                 logging.info("Train Loss: %s" % (epoch_loss))
                 logging.info("Train Adv Acc: %s" % (train_adv_acc))
@@ -398,7 +397,7 @@ class AdvTrainer:
                 d = (d / torch.norm(d)) * torch.norm(_filter)
                 direction = torch.cat((direction, d.flatten()))
 
-        for alpha in tqdm(torch.linspace(-1, 1, 41)):
+        for alpha in tqdm(torch.linspace(-1, 1, 5)):
 
             loss = 0
             for _, (img, label) in enumerate((train_loader)):
@@ -421,15 +420,16 @@ class AdvTrainer:
         Vec2Params(weight, model.parameters())
         return curve
     
-    def plot_curve(self, curves):
+    def plot_curve(self, curves, ckpt_path):
 
         # Plot loss landscape curve
-        cmap = LinearSegmentedColormap.from_list('blue', ['#add8e6', '#00008b'])
+        cmap_b = LinearSegmentedColormap.from_list('blue', ['#ADD8E6', '#00008B'])
+        cmap_o = LinearSegmentedColormap.from_list('green', ['#FBD589', '#BB1010'])
 
         plt.clf()
-        plt.axis([-1, 1, 0, 5])
-        plt.xticks(np.linspace(-1, 1, 5))
-        plt.yticks(np.linspace(0, 5, 6))
+        _, ax = plt.subplots(1, 2, figsize=(10, 4))
+        plt.setp(ax, xticks = np.linspace(-1, 1, 5), yticks = np.linspace(0, 5, 6),
+                 xlim = (-1, 1), ylim = (0 ,5))
 
         plt.rcParams['axes.autolimit_mode'] = 'round_numbers'
         plt.rcParams['axes.xmargin'] = 0
@@ -437,5 +437,15 @@ class AdvTrainer:
 
 
         for index, curve in enumerate(curves):
-            plt.plot(np.linspace(-1, 1, 41), curve, color = cmap(index / len(curves)))    
+
+            spline = interpolate.CubicSpline(np.linspace(-1, 1, 5), curve)
+            x = np.linspace(-1, 1, 500)
+            y = spline(x)
+
+            if index < 5:
+                ax[0].plot(x, y, label = f"{(index + 1) * 20}", color = cmap_b(index / 5)) 
+            else:
+                ax[1].plot(x, y, label = f"{(index + 1) * 20}", color = cmap_o((index / 5) - 1)) 
+
+        plt.savefig(os.path.join(ckpt_path, "loss_landscape.png"))   
         
