@@ -158,7 +158,7 @@ def _parse_argument():
     parser.add_argument("--description", type=str, required=True)
     parser.add_argument("--cuda", type=str, default="1")
     parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--aux_batch_size", type=int, default=0)
+    parser.add_argument("--aux_batch_size", type=int, default=128)
     parser.add_argument("--num_workers", type=int, default=16)
     parser.add_argument("--ema", action="store_true")
     args = parser.parse_args()

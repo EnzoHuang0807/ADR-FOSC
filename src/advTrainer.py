@@ -397,7 +397,7 @@ class AdvTrainer:
                 d = (d / torch.norm(d)) * torch.norm(_filter)
                 direction = torch.cat((direction, d.flatten()))
 
-        for alpha in tqdm(torch.linspace(-1, 1, 5)):
+        for alpha in tqdm(torch.linspace(-1, 1, 41)):
 
             loss = 0
             for _, (img, label) in enumerate((train_loader)):
@@ -424,7 +424,7 @@ class AdvTrainer:
 
         # Plot loss landscape curve
         cmap_b = LinearSegmentedColormap.from_list('blue', ['#ADD8E6', '#00008B'])
-        cmap_o = LinearSegmentedColormap.from_list('green', ['#FBD589', '#BB1010'])
+        cmap_o = LinearSegmentedColormap.from_list('orange', ['#FBD589', '#BB1010'])
 
         plt.clf()
         _, ax = plt.subplots(1, 2, figsize=(10, 4))
@@ -437,15 +437,14 @@ class AdvTrainer:
 
 
         for index, curve in enumerate(curves):
-
-            spline = interpolate.CubicSpline(np.linspace(-1, 1, 5), curve)
-            x = np.linspace(-1, 1, 500)
-            y = spline(x)
-
+            
+            x = np.linspace(-1, 1, 41)
             if index < 5:
-                ax[0].plot(x, y, label = f"{(index + 1) * 20}", color = cmap_b(index / 5)) 
+                ax[0].plot(x, curve, label = f"{(index + 1) * 20}", color = cmap_b(index / 5)) 
+                ax[0].legend()
             else:
-                ax[1].plot(x, y, label = f"{(index + 1) * 20}", color = cmap_o((index / 5) - 1)) 
+                ax[1].plot(x, curve, label = f"{(index + 1) * 20}", color = cmap_o((index / 5) - 1)) 
+                ax[1].legend()
 
         plt.savefig(os.path.join(ckpt_path, "loss_landscape.png"))   
         

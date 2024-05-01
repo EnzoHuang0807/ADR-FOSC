@@ -2,7 +2,7 @@
 main.seed = 0
 main.dataset = "cifar10"
 main.epoch = 100
-main.aux_dataset_path = "/path/to/cifar10_ddpm.npz"
+main.aux_dataset_path = "./aux_dataset/cifar10_ddpm.npz"
 
 # Model Type
 create_model.model_name = "preact-resnet18"
