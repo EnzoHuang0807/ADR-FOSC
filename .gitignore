@@ -1,3 +1,7 @@
 *_experiment/
+
 data/
 src/aux_dataset/
+
+train.sh
+__pycache__/

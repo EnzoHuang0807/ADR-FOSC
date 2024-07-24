@@ -44,6 +44,8 @@ class AdvTrainer:
         adv_beta=6.0,
         use_ema=True,
         aux_loader=None,
+        fosc_threshold=None,
+        show_plot=True
     ):
         assert adv_train_mode in ["Normal", "PGD-AT", "TRADES"]
         self.device = device
@@ -74,6 +76,9 @@ class AdvTrainer:
         if aux_loader is not None:
             self.aux_loader = cycle(aux_loader)
 
+        self.fosc_threshold = fosc_threshold
+        self.show_plot = show_plot
+
         logging.info("Evaluate with EMA: %s" % (use_ema))
         logging.info("Use ADR: %s" % (temperature_high > 0))
 
@@ -103,6 +108,7 @@ class AdvTrainer:
                 self.temperature_high,
                 self.interpolation_low,
                 self.interpolation_high,
+                self.fosc_threshold
             )
             if self.temperature_high > 0
             else None
@@ -128,7 +134,7 @@ class AdvTrainer:
                     eval_clean_acc, eval_adv_acc = self.eval(model, val_loader)
 
                 # Plotting weight loss landscape
-                if e in [ i for i in range(20 - 1, 200, 20)]:
+                if self.show_plot and e in [ i for i in range(20 - 1, 200, 20)]:
                     logging.info("Epoch: %s, Plotting Weight Loss Landscape" % (e))
                     curves.append(self.loss_landscape(model, train_loader))
                     self.plot_curve(curves, ckpt_path)
@@ -257,8 +263,9 @@ class AdvTrainer:
 
             # Enabling ADR
             if self.adr is not None:
-                label = self.adr(img, label, self.model_ema.module, global_step + idx)
-
+                label = self.adr(img, label, self.model_ema.module, global_step + idx, 
+                                 model, self.adv_train_mode, self.adv_attacker)
+                
             # Generate Adversarial Examples
             if self.adv_train_mode != "Normal":
                 img_adv = self.adv_attacker.attack(model, img, label)
@@ -270,9 +277,10 @@ class AdvTrainer:
                     retain_graph=False, create_graph=False
             )[0]
 
-            fosc += torch.sum((-1 * torch.einsum("ijkl, ijkl -> i", (img_adv - img), grad) 
+            batch_fosc = torch.sum((-1 * torch.einsum("ijkl, ijkl -> i", (img_adv - img), grad) 
                         + 8.0 / 255 *  torch.norm(grad, dim = (1,2,3), p = 1))).item()
-
+            fosc += batch_fosc
+            
             # Train the model
             model.train()
             optimizer.zero_grad()
@@ -390,6 +398,13 @@ class AdvTrainer:
         weight = Params2Vec(model.parameters())
         curve = []
 
+        eval_attacker = torchattacks.PGD(
+            model,
+            eps=8.0 / 255.0,
+            alpha=2.0 / 255.0,
+            steps=10,
+        )
+
         direction = torch.tensor([]).to(self.device)
         for layer in model.parameters():
             for _filter in layer:
@@ -410,7 +425,7 @@ class AdvTrainer:
                 
                 # Generate Adversarial Examples
                 if self.adv_train_mode != "Normal":
-                    img_adv = self.adv_attacker.attack(model, img, label)
+                    img_adv = eval_attacker(img, label)
 
                 logits = model(img_adv)
                 loss += cls_loss_fn(logits, label).item()
@@ -437,7 +452,6 @@ class AdvTrainer:
 
 
         for index, curve in enumerate(curves):
-            
             x = np.linspace(-1, 1, 41)
             if index < 5:
                 ax[0].plot(x, curve, label = f"{(index + 1) * 20}", color = cmap_b(index / 5)) 

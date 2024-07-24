@@ -128,6 +128,8 @@ def main(parameter, seed, dataset, epoch, restore_ckpt=None, aux_dataset_path=No
         hparam,
         use_ema=parameter["ema"],
         aux_loader=aux_loader,
+        fosc_threshold=parameter["fosc_threshold"],
+        show_plot=parameter["show_plot"]
     )
     trainer.train(
         model,
@@ -161,6 +163,8 @@ def _parse_argument():
     parser.add_argument("--aux_batch_size", type=int, default=128)
     parser.add_argument("--num_workers", type=int, default=16)
     parser.add_argument("--ema", action="store_true")
+    parser.add_argument("--show_plot", action="store_true")
+    parser.add_argument("--fosc_threshold", type=float, default=None)
     args = parser.parse_args()
     return args
 
