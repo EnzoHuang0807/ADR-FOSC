@@ -40,6 +40,7 @@ def main(parameter, seed, dataset, epoch, restore_ckpt=None, aux_dataset_path=No
     train_set = build_dataset(
         dataset_name=dataset,
         is_train=True,
+        random_ratio=parameter["random_ratio"]
     )
     val_set = build_dataset(
         dataset_name=dataset,
@@ -53,6 +54,7 @@ def main(parameter, seed, dataset, epoch, restore_ckpt=None, aux_dataset_path=No
         shuffle=True,
         drop_last=True,
     )
+
     val_loader = torch.utils.data.DataLoader(
         val_set,
         batch_size=parameter["batch_size"],
@@ -165,6 +167,7 @@ def _parse_argument():
     parser.add_argument("--ema", action="store_true")
     parser.add_argument("--show_plot", action="store_true")
     parser.add_argument("--fosc_threshold", type=float, default=None)
+    parser.add_argument("--random_ratio", type=float, default=0)
     args = parser.parse_args()
     return args
 
