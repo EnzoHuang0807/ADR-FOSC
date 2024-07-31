@@ -95,6 +95,16 @@ def create_model(model_name, dataset_name="cifar10", activation_name="relu"):
             activation_fn=activation,
             adaptive_pooling=adaptive_pooling,
         )
+    elif model_name == "wideresnet-28-10":
+        model = WideResNet(
+            mean,
+            std,
+            num_classes=num_classes,
+            depth=28,
+            width=10,
+            activation_fn=activation,
+            adaptive_pooling=adaptive_pooling,
+        )
     else:
         raise NotImplementedError("Not support such model: %s" % (model_name))
     return model
