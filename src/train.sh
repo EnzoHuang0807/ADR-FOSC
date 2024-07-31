@@ -1,7 +1,7 @@
 python train.py \
-	--description PGD-AT-AWP-ADR \
-	--cuda 2 \
-	--gin_config ./config/cifar10/resnet18_pgd_awp_adr.gin
+	--description TRADES-AT \
+	--cuda 4 \
+	--gin_config ./config/cifar10/resnet18_trades_sgd.gin
 
 python train.py \
 	--description preact-PGD-AT-AWP-ADR \
